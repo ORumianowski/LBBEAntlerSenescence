@@ -4,9 +4,33 @@ rm(list = ls()) # nettoyage de l'environnement de travail
 
 source("utils_packages.R")
 
-data_antler_telo = read_excel("data/Dataset_Telomere_Bois040522.xlsx", skip = 0, na = "NA") %>% 
-  rename(Day = DateCapture,
-         RTL = QC_RTL,
+
+date_day = function(date){
+  
+  if (format(date, format = "%Y")=="2016"){
+    startdate <- as.Date("01/12/2015","%d/%m/%Y")
+    new_date = difftime(date,startdate ,units="days") %>% 
+      as.integer()
+    return(new_date)
+  }
+  
+  if (format(date, format = "%Y")=="2017"){
+    startdate <- as.Date("01/12/2016","%d/%m/%Y")
+    new_date = difftime(date,startdate ,units="days")%>% 
+      as.integer()
+    return(new_date)
+  }
+  
+  if (format(date, format = "%Y")=="2018"){
+    startdate <- as.Date("01/12/2017","%d/%m/%Y")
+    new_date = difftime(date,startdate ,units="days")%>% 
+      as.integer()
+    return(new_date)
+  }
+}
+
+data_antler_telo = read_excel("Dataset_Telomere_Bois040522.xlsx", skip = 0, na = "NA") %>% 
+  rename(RTL = QC_RTL,
          Population = population,
          Tbars = tbars,
          Cohort = Cohorte,
@@ -14,12 +38,13 @@ data_antler_telo = read_excel("data/Dataset_Telomere_Bois040522.xlsx", skip = 0,
          Weight = Masse,
          AntlerLeft = Antler_left,
          AntlerRight = Antler_right) %>% 
-  dplyr::select(Year, Day, 
+  dplyr::select(Year, DateCapture, 
                 Population, Id_JM,
                 Cohort, 
                 AntlerLeft, AntlerRight, AntlerType, Weight,
                 Tbars, RTL) %>% 
   unite("Id", 3:4, sep="", remove=FALSE) %>% 
+  mutate(Day = map_dbl(DateCapture, date_day)) %>% 
   dplyr::select(Year, Day, Id,  
                 Cohort, Population, AntlerLeft, AntlerRight, AntlerType, Weight,
                 Tbars, RTL) %>% 
@@ -30,12 +55,8 @@ data_antler_telo = read_excel("data/Dataset_Telomere_Bois040522.xlsx", skip = 0,
          AntlerType = as.factor(AntlerType))
 
 
-#convertir la date
-#recyclage lors du merge
 
-
-
-data_antler_epi = read_excel("data/Dataset_ODIN_160422.xlsx", skip = 0, na = "NA") %>% 
+data_antler_epi = read_excel("Dataset_ODIN_160422.xlsx", skip = 0, na = "NA") %>% 
   mutate(RightAntlerLength    = str_remove(RightAntlerLength, "_broken") %>% 
            as.numeric()) %>% 
   rename(Year = YearCapture,
