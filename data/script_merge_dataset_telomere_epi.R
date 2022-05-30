@@ -59,5 +59,6 @@ data_antler_epi = read_excel("data/Dataset_ODIN_160422.xlsx", skip = 0, na = "NA
 
 
 
+
 data_antler <- merge(data_antler_epi, data_antler_telo, 
                      by=c("Id", "Year", "Population", "AgeClass", "RTL", "Weight", "AntlerLength", "Cohort", "AntlerType" ), all=TRUE )
