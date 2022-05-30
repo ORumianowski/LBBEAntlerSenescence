@@ -1,2 +1,2 @@
 # LBBEAntlerSenescence
-Testing the association antler length and senescence proxies (telomeres, epigenetic age)
+Testing the association antler length and senescence proxies (telomeres, epigenetic age estimator)
