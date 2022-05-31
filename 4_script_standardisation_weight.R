@@ -77,16 +77,6 @@ two_slopes = function(pars, x) {
 }
 
 
-
-
-# Fonction d'optimisation par MV ------------------------------------------
-
-n = 1000
-X = abs(rnorm(n))
-Y = two_slopes(c(-2, 2, 2, 13), X) + rnorm(length(X), sd = .5)
-
-
-
 NLL = function(pars,
                ma_fonction,
                y = Y,
@@ -122,12 +112,21 @@ get_AIC = function(initial_pars,
   2 * neg_log_lik + 2 * length(initial_pars)
 }
 
+
+# Fonction d'optimisation par MV ------------------------------------------
+
+n = 1000
+X = abs(rnorm(n))
+Y = one_slope(c(-2, 2, 1, 0.1), X) + rnorm(length(X), sd = .5)
+
+plot(X,Y)
+
 optim_output = optim(
   par = c(1, 1, 1, 1, 1),
   fn = function(p)
     NLL(
       p,
-      ma_fonction = two_slopes,
+      ma_fonction = one_slope,
       y = Y,
       x = X
     )
@@ -135,9 +134,6 @@ optim_output = optim(
 
 
 optim_output$par
-
-
-
 
 
 # Application aux données réelles -----------------------------------------
@@ -159,7 +155,7 @@ purrr::pmap_dbl(plan_experience, get_AIC)
 
 
 
-ggplot(data_antler_chize,
+sggplot(data_antler_chize,
        aes(x = X,
            y = Y)) +
   geom_point() +
