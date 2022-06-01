@@ -1,4 +1,12 @@
 
+#Script utilisé pour obtnir les indices de senescence épigénétique
+
+# Trois indices sont obtenus:
+# (i) la différence simple i.e. (l'âge épi - l'âge chrnologique): "EpiSimpleDiff"
+# (ii) l'indice de Horvath: "AgeAccelLOO"
+# (iii) l'indice via les residus de la regression 
+# de la fonction sélectionnée par cross-validation: "AgeAccelResiduals"
+
 # Via les résidus (fct log) -----------------------------------------------
 
 dantler_accel = dplyr::select(dantler, DNAmAge, Age, Id, Year) %>% 

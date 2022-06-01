@@ -1,7 +1,11 @@
+#Script utilisé pour standardiser les masses des 1A
 
-# Throughout the capture period, fawns gained
+#Les fonctions utilisées proviennent de Douhard et al., 2017.
+
+
+# "Throughout the capture period, fawns gained
 # an average of 12 g day–10.005 SE and 24 g day–10.008 SE at CH and TF, respectively, 
-# without detectablesex-differences.
+# without detectablesex-differences."
 
 
 dantler_1A = subset(dantler, Age==1) %>% 

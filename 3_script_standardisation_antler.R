@@ -1,4 +1,7 @@
-
+#Script utilisé pour standardiser les longueurs de bois
+#
+#Les individus ont été partitionnés fonction de l'âge (1A et +1A) 
+#et ne fonction de la population
 
 # Fonctions de standardisation --------------------------------------------
 

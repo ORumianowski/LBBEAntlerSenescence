@@ -1,3 +1,6 @@
+#Script utilisé pour sélection la meilleure fonction pour 
+#standardiser les longueurs de bois
+
 rm(list = ls()) # nettoyage de l'environnement de travail
 
 setwd("C:/Users/odinr/Desktop/Stage LBBE MMIP/LBBEAntlerSenescence")

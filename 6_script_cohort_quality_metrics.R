@@ -1,0 +1,1 @@
+# Script utilisé pour obtenir les indices de qualité de cohorte
