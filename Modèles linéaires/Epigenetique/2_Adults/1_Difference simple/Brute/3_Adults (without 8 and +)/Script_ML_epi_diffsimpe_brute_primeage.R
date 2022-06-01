@@ -28,7 +28,7 @@ vis_miss(dantler)
 ## Sélection de la population
 
 dantler_NA = dantler %>% 
-  subset(Age!=1) %>% 
+  subset(Age!=1 & Age < 8) %>% 
   dplyr::select(Id, Year, Day, Age,
                 Cohort, Population, 
                 Weight, Antler_std, 

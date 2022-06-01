@@ -28,15 +28,15 @@ vis_miss(dantler)
 ## Sélection de la population
 
 dantler_NA = dantler %>% 
-  subset(Age!=1) %>% 
+  subset(Age!=1 & Age < 8) %>% 
   dplyr::select(Id, Year, Day, Age,
                 Cohort, Population, 
                 Weight, Antler_std, 
                 RTL,
-                EpiSimpleDiff) 
+                AgeAccelLOO) 
 vis_miss(dantler_NA)
 
-dantler_NA = dantler_NA[complete.cases(dantler_NA$EpiSimpleDiff), ]
+dantler_NA = dantler_NA[complete.cases(dantler_NA$AgeAccelLOO), ]
 
 vis_miss(dantler_NA)
 
@@ -50,11 +50,11 @@ dantler_NA_without_RTL = dantler_NA %>%
   dplyr::select(Id, Year, Day, Age,
                 Cohort, Population, 
                 Weight, Antler_std,
-                EpiSimpleDiff) %>% 
+                AgeAccelLOO) %>% 
   na.omit()
 
 
-reg_lm <- lm(EpiSimpleDiff ~ Cohort + Population + 
+reg_lm <- lm(AgeAccelLOO ~ Cohort + Population + 
                   Weight + Antler_std+
                   Antler_std:Cohort + Antler_std:Population + 
                   Weight:Cohort  + Weight:Population +
@@ -84,10 +84,10 @@ dantler_NA_without_RTL = dantler_NA%>%
   dplyr::select(Id, Year, Day, Age,
                 Cohort, Population, 
                 Weight_log, Antler_std_log,
-                EpiSimpleDiff) %>% 
+                AgeAccelLOO) %>% 
   na.omit()
 
-reg_lm <- lm(EpiSimpleDiff ~ Weight_log + Antler_std_log + Cohort + Population + 
+reg_lm <- lm(AgeAccelLOO ~ Weight_log + Antler_std_log + Cohort + Population + 
                   Antler_std_log:Weight_log + Antler_std_log:Cohort + Antler_std_log:Population + 
                   Weight_log:Cohort  + Weight_log:Population +
                   Cohort:Population
