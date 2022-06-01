@@ -1,337 +1,46 @@
-rm(list = ls()) # nettoyage de l'environnement de travail
 
-source("1_utils_packages.R")
-source("2_script_merge_dataset_telomere_epi.R")
+# Throughout the capture period, fawns gained
+# an average of 12 g day–10.005 SE and 24 g day–10.008 SE at CH and TF, respectively, 
+# without detectablesex-differences.
 
 
-# A faire avec données completes
-                              
-dantler_used_std =select(dantler, 
-                             Id, 
-                             Year,
-                             Day,
-                             Weight,
-                             AgeClass,
-                             Population) %>% 
-  subset(AgeClass == "(0,1]")
+dantler_1A = subset(dantler, Age==1) %>% 
+  dplyr::select(Day,
+         Weight,
+         Population,
+         Id,Year) 
 
 
-ggplot(dantler_used_std,
-       aes(x = Day,
-           y = Weight,
-           color = Population,
-           shape = Year)) +
-  geom_point() 
+# Unmeasured Antler Length: 0 individual
+dantler_1A[which(is.na(dantler_1A$Weight)) , ]
 
-# Fonctions de standardisation --------------------------------------------
+## Fonction de standardisation de la masse des 1A (population-dependante)
 
-DATE_REF = 60
-
-std_weight = function(weight, date, pars, date_ref = DATE_REF) {
-  a = pars[1]
-  b = pars[2]
-  (weight_length - (a * date + b))  + a * date_ref + b
-}
-
-# Définition des fonctions de modélisation de la longueur des bois --------
-
-# fonction constante
-
-constante = function(pars, x) {
-  a = pars[1]
-  
-  a
-}
-
-# fonction linéaire
-
-lineaire = function(pars, x = 0) {
-  a = pars[1]
-  b = pars[2]
-  
-  a * x + b
-}
-
-# fonction de seuil avec une pente et un plateau
-
-one_slope = function(pars, x) {
-  a = pars[1]
-  b = pars[2]
-  seuil = pars[3]
-  
-  ifelse(x < seuil, a * x + b, a * seuil + b)
-}
-
-# fonction de seuil avec deux pentes
-
-two_slopes = function(pars, x) {
-  a = pars[1]
-  b = pars[2]
-  seuil = pars[3]
-  c = pars[4]
-  OO_2 = (a - c) * seuil + b
-  
-  ifelse(test = x < seuil,
-         yes = a * x + b,
-         no = c * x + OO_2)
-}
-
-
-NLL = function(pars,
-               ma_fonction,
-               y = Y,
-               x = X) {
-  # Values predicted by the model
-  sigma = pars[length(pars)]
-  parametres_moyenne = pars[-length(pars)]
-  Gpred = ma_fonction(parametres_moyenne, x)
-  # Negative log-likelihood 
-  -sum(dnorm(
-    x = y,
-    mean = Gpred,
-    sd = sigma,
-    log = TRUE
-  ))
-}
-
-get_AIC = function(initial_pars,
-                   ma_fonction,
-                   y = Y,
-                   x = X) {
-  neg_log_lik = optim(
-    par = initial_pars,
-    fn = function(p)
-      NLL(
-        p,
-        ma_fonction = ma_fonction,
-        y = Y,
-        x = X
-      ),
-    hessian = TRUE
-  )$value
-  2 * neg_log_lik + 2 * length(initial_pars)
-}
-
-
-# Fonction d'optimisation par MV ------------------------------------------
-
-n = 1000
-X = abs(rnorm(n))
-Y = one_slope(c(-2, 2, 1, 0.1), X) + rnorm(length(X), sd = .5)
-
-plot(X,Y)
-
-optim_output = optim(
-  par = c(1, 1, 1, 1, 1),
-  fn = function(p)
-    NLL(
-      p,
-      ma_fonction = one_slope,
-      y = Y,
-      x = X
-    )
-)
-
-
-optim_output$par
-
-
-# Application aux données réelles -----------------------------------------
-
-# CHIZE -------------------------------------------------------------------
-
-data_antler_chize = subset(dantler_used_std, Population == "C" )
-X = data_antler_chize$Day
-Y = data_antler_chize$Weight %>% 
-  log()
-
-ggplot(data_antler_chize,
-       aes(x = Day,
-           y = log(Weight),
-           color = Year)) +
-  geom_point() 
-
-purrr::pmap_dbl(plan_experience, get_AIC)
-
-
-
-sggplot(data_antler_chize,
-       aes(x = X,
-           y = Y)) +
-  geom_point() +
-  
-  geom_abline(slope = optim_output$par[1],
-              intercept = optim_output$par[2],
-              colour = "red")+
-  labs( title = "Chizé - 1A",
-        x= "Julian Capture Date",
-        y= "Antler Length (log)")
-
-
-data_antler_3 = mutate(data_antler_2,
-                       Antler_std = exp(std_antler(
-                         log(AntlerLength), Day, optim_output$par
-                       )))
-
-
-data_antler_1C = data_antler_3[, c("Pop_Id", "Year", "Antler_std")]
-
-
-# Classes supérieures -----------------------------------------------------
-
-
-data_antler_2 = subset(data_antler_used_std, AntlerType == "BV"| is.na(AntlerType)) %>%
-  subset(AgeClass != "(0,1]" & Population == "C") 
-
-X = data_antler_2$Day
-Y = data_antler_2$AntlerLength %>%
-  log()
-
-#purrr::pmap_dbl(plan_experience, get_AIC)
-
-optim_output = optim(
-  par = c(0, 1),
-  fn = function(p)
-    NLL(
-      p,
-      ma_fonction = constante,
-      y = Y,
-      x = X
-    )
-)
-
-
-ggplot(data_antler_2,
-       aes(x = X,
-           y = Y,
-           color = AntlerType)) +
-  geom_point() +
-  
-  geom_abline(slope = 0,
-              intercept = optim_output$par[1],
-              colour = "red")  +
-  labs( title = "Chizé - +1A",
-        x= "Julian Capture Date",
-        y= "Antler Length (log)")
-
-
-data_antler_3 = mutate(data_antler_2,
-                       Antler_std = AntlerLength)
-
-
-data_antler_NC = data_antler_3[, c("Pop_Id", "Year", "Antler_std")]
-
-# Trois Fontaines ---------------------------------------------------------
-
-# Premiere classe ---------------------------------------------------------
-
-data_antler_2 = subset(data_antler_used_std,AntlerType == "BV" | is.na(AntlerType)) %>%
-  subset(AgeClass == "(0,1]" & Population == "TF") 
-
-X = data_antler_2$Day
-Y = data_antler_2$AntlerLength %>%
-  log()
-
-#purrr::pmap_dbl(plan_experience, get_AIC)
-
-optim_output = optim(
-  par = c(1, 0, 1),
-  fn = function(p)
-    NLL(
-      p,
-      ma_fonction = lineaire,
-      y = Y,
-      x = X
-    )
-)
-
-ggplot(data_antler_2,
-       aes(x = X,
-           y = Y,
-           color = AntlerType)) +
-  geom_point() +
-  
-  geom_abline(slope = optim_output$par[1],
-              intercept = optim_output$par[2],
-              colour = "red")+
-  labs( title = "Trois-Fontaines - 1A",
-        x= "Julian Capture Date",
-        y= "Antler Length (log)")
-
-
-data_antler_3 = mutate(data_antler_2,
-                       Antler_std = exp(std_antler(
-                         log(AntlerLength), Day, optim_output$par
-                       )))
-
-
-data_antler_1TF = data_antler_3[, c("Pop_Id", "Year", "Antler_std")]
-
-
-# Classes supérieures -----------------------------------------------------
-
-
-data_antler_2 = subset(data_antler_used_std, AntlerType == "BV" | is.na(AntlerType)) %>%
-  subset(AgeClass != "(0,1]" & Population == "TF") 
-
-X = data_antler_2$Day
-Y = data_antler_2$AntlerLength %>%
-  log()
-
-#purrr::pmap_dbl(plan_experience, get_AIC)
-
-optim_output = optim(
-  par = c(1, 0, 1),
-  fn = function(p)
-    NLL(
-      p,
-      ma_fonction = lineaire,
-      y = Y,
-      x = X
-    )
-)
-
-ggplot(data_antler_2,
-       aes(x = X,
-           y = Y,
-           color = AntlerType)) +
-  geom_point() +
-  
-  geom_abline(slope = optim_output$par[1],
-              intercept = optim_output$par[2],
-              colour = "red")+
-  labs( title = "Trois-Fontaines - +1A",
-        x= "Julian Capture Date",
-        y= "Antler Length (log)")
-
-
-data_antler_3 = mutate(data_antler_2,
-                       Antler_std = exp(std_antler(
-                         log(AntlerLength), Day, optim_output$par
-                       )))
-
-data_antler_NTF = data_antler_3[, c("Pop_Id", "Year", "Antler_std")]
-
-data_antler_std = rbind(data_antler_1C,
-                        data_antler_NC,
-                        data_antler_1TF,
-                        data_antler_NTF)
-
-data_antler_complet <-  merge(data_antler_used_std, data_antler_std, by=c("Pop_Id", "Year"), all.x = TRUE)
-
-
-# Traitement des cas Antler_Type==BD  & AntlerLength <= 1 --------------------
-
-for (k in 1:nrow(data_antler_complet)){
-  if (!is.na(data_antler_complet[k, "AntlerType"])){
-    if (data_antler_complet[k, "AntlerType"] == "BD"){ 
-      data_antler_complet[k, "Antler_std"] = data_antler_complet[k, "AntlerLength"]
-    }
+std_weight = function(Weight, Day, Day_ref=60, Population, gain_C= 0.012, gain_TF=0.024){
+  if (Population=="C"){
+    return (Weight + (Day_ref-Day)*gain_C)
   }
-  if (data_antler_complet[k, "AntlerLength"] <= 1){
-    data_antler_complet[k, "Antler_std"] = data_antler_complet[k, "AntlerLength"]
+  if (Population=="TF"){
+    return (Weight + (Day_ref-Day)*gain_TF)
   }
 }
 
-data_antler_complet <- data_antler_complet[,c("Pop_Id", "Year", "Antler_std")]
-data_antler <-  merge(data_antler, data_antler_complet, by=c("Pop_Id", "Year"), all.x = TRUE)
+
+
+##Standardisation
+dantler_1A_std =   dplyr::select(dantler_1A, Day,
+                                 Weight,
+                                 Population) 
+
+dantler_1A = mutate(dantler_1A,
+                   Weight_std = purrr::pmap_dbl(dantler_1A_std, std_weight)) %>% 
+  dplyr::select(Id, Year, Weight_std)
+
+
+
+dantler <-  merge(dantler, dantler_1A, by=c("Id", "Year"), all.x = TRUE)
+
+rm(dantler_1A_std)
+rm(dantler_1A)
+rm(std_weight)
+

@@ -1,4 +1,20 @@
 
+
+# Fonctions de standardisation --------------------------------------------
+
+DATE_REF = 60
+
+std_antler = function(antler_length, date, pars, date_ref = DATE_REF) {
+  a = pars[1]
+  b = pars[2]
+  (antler_length - (a * date + b))  + a * date_ref + b
+}
+
+# -------------------------------------------------------------------------
+
+
+
+
 # Unmeasured Antler Length
 dantler_used_std = dantler[-which(is.na(dantler$AntlerLength)) , ]
 
@@ -14,15 +30,6 @@ dantler_used_std =dantler_used_std[,c("Id",
                               
 
 
-# Fonctions de standardisation --------------------------------------------
-
-DATE_REF = 60
-
-std_antler = function(antler_length, date, pars, date_ref = DATE_REF) {
-  a = pars[1]
-  b = pars[2]
-  (antler_length - (a * date + b))  + a * date_ref + b
-}
 
 # Définition des fonctions de modélisation de la longueur des bois --------
 
@@ -43,29 +50,6 @@ lineaire = function(pars, x = 0) {
   a * x + b
 }
 
-# fonction de seuil avec une pente et un plateau
-
-one_slope = function(pars, x) {
-  a = pars[1]
-  b = pars[2]
-  seuil = pars[3]
-  
-  ifelse(x < seuil, a * x + b, a * seuil + b)
-}
-
-# fonction de seuil avec deux pentes
-
-two_slopes = function(pars, x) {
-  a = pars[1]
-  b = pars[2]
-  seuil = pars[3]
-  c = pars[4]
-  OO_2 = (a - c) * seuil + b
-  
-  ifelse(test = x < seuil,
-         yes = a * x + b,
-         no = c * x + OO_2)
-}
 
 
 
@@ -92,24 +76,6 @@ Y = lineaire(c(2, 5, 1), X) + rnorm(length(X), sd = .5)
 
 
 
-optim_output = optim(
-  par = c(1, 0, 1),
-  fn = function(p)
-    NLL(
-      p,
-      ma_fonction = lineaire,
-      y = Y,
-      x = X
-    )
-)
-
-plan_experience = tibble(
-  ma_fonction = c(constante, lineaire, one_slope, two_slopes),
-  initial_pars = list(c(0, 1), c(1, 0, 1), c(1, 0, 1, 1), c(1, 0, 0, 2, 1))
-)
-
-
-purrr::pmap_dbl(plan_experience,get_AIC)
 
 # Application aux données réelles -----------------------------------------
 
@@ -149,7 +115,7 @@ dantler_1C = dantler_3[, c("Id", "Year", "Antler_std")]
 
 
 dantler_2 = subset(dantler_used_std, AntlerType == "BV"| is.na(AntlerType)) %>%
-  subset(AgeClass != "(0,1]" & Population == "C") 
+  subset(AgeClass != "(0,1]" & Population == "C" & AntlerLength > 1) 
 
 X = dantler_2$Day
 Y = dantler_2$AntlerLength %>%
@@ -165,8 +131,6 @@ optim_output = optim(
       x = X
     )
 )
-
-
 
 
 dantler_3 = mutate(dantler_2,
@@ -212,7 +176,7 @@ dantler_1TF = dantler_3[, c("Id", "Year", "Antler_std")]
 
 
 dantler_2 = subset(dantler_used_std, AntlerType == "BV" | is.na(AntlerType)) %>%
-  subset(AgeClass != "(0,1]" & Population == "TF") 
+  subset(AgeClass != "(0,1]" & Population == "TF" & AntlerLength > 1) 
 
 X = dantler_2$Day
 Y = dantler_2$AntlerLength %>%

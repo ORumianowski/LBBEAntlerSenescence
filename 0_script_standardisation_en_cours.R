@@ -1,28 +1,9 @@
+n = 1000
+X = abs(rnorm(n))
+Y = 5 + 2 * X + rnorm(length(X), sd = .5)
+dt = data.frame(X,Y)
+plot(dt)
 
-# Unmeasured Antler Length
-dantler_used_std = dantler[-which(is.na(dantler$AntlerLength)) , ]
-
-
-
-dantler_used_std =dantler_used_std[,c("Id", 
-                              "Year",
-                              "Day",
-                              "AntlerLength",
-                              "AntlerType",
-                              "AgeClass",
-                              "Population")]
-                              
-
-
-# Fonctions de standardisation --------------------------------------------
-
-DATE_REF = 60
-
-std_antler = function(antler_length, date, pars, date_ref = DATE_REF) {
-  a = pars[1]
-  b = pars[2]
-  (antler_length - (a * date + b))  + a * date_ref + b
-}
 
 # Définition des fonctions de modélisation de la longueur des bois --------
 
@@ -86,9 +67,6 @@ NLL = function(pars,
   ))
 }
 
-n = 1000
-X = abs(rnorm(n))
-Y = lineaire(c(2, 5, 1), X) + rnorm(length(X), sd = .5)
 
 
 
@@ -107,6 +85,8 @@ plan_experience = tibble(
   ma_fonction = c(constante, lineaire, one_slope, two_slopes),
   initial_pars = list(c(0, 1), c(1, 0, 1), c(1, 0, 1, 1), c(1, 0, 0, 2, 1))
 )
+
+
 
 
 purrr::pmap_dbl(plan_experience,get_AIC)
